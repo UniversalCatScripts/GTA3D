@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galleta Clicker</title>
+<style>
+:root{
+  --bg:#1b120c;--panel:#2a1c13;--panel2:#352419;--line:#4d3526;
+  --text:#f7eadb;--muted:#c0a68d;--gold:#f2b84b;--ok:#7bd88f;--bad:#e8745f;--star:#a9b8ff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(circle at 18% 25%,#3d2918 0%,var(--bg) 60%);color:var(--text)}
+.app{display:grid;grid-template-columns:minmax(280px,1fr) minmax(320px,1.15fr) minmax(320px,1fr);gap:12px;padding:12px;height:100vh}
+@media(max-width:1000px){.app{grid-template-columns:1fr;height:auto}.panel{max-height:none!important}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;overflow:auto;max-height:calc(100vh - 24px)}
+h2{margin:0;font-size:1.05rem}
+h3{margin:18px 0 8px;font-size:.95rem;color:var(--gold)}
+.muted{color:var(--muted)}
+button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--gold)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.on{background:var(--gold);color:#2a1c13;border-color:var(--gold);font-weight:700}
+button.danger{border-color:#7a3a2e;color:#ffb3a5}
+button.armed{background:var(--bad)!important;color:#fff!important}
+button.big{width:100%;padding:12px;font-size:1.05rem;font-weight:700}
+button.star{background:linear-gradient(135deg,#3b3f8f,#6b4fa8);border-color:var(--star)}
+input[type=text],textarea{font:inherit;color:var(--text);background:#20150e;border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%}
+textarea{min-height:80px;resize:vertical;font-family:ui-monospace,monospace;font-size:.75rem;word-break:break-all}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.row input{flex:1;min-width:140px}
+.hint{font-size:.8rem;color:var(--muted);margin:4px 0 8px}
+.warn{font-size:.85rem;color:#ffcf8a;background:#4a3215;border-radius:8px;padding:8px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.small{padding:4px 9px;font-size:.8rem}
+
+/* Izquierda */
+.left{display:flex;flex-direction:column;align-items:center;text-align:center}
+.news{width:100%;font-size:.8rem;color:var(--muted);background:#20150e;border-radius:10px;padding:8px 10px;min-height:36px;transition:opacity .4s}
+.bakery{font-size:1.1rem;font-weight:700;color:var(--gold);margin-top:10px}
+.count{font-size:2.05rem;font-weight:800;margin-top:8px;line-height:1.1}
+.count small{display:block;font-size:.95rem;font-weight:500;color:var(--muted)}
+.cps{color:var(--muted);margin-top:4px}
+.cookie-wrap{position:relative;margin:24px 0 14px;width:230px;height:230px;display:grid;place-items:center}
+.cookie-wrap::before{content:"";position:absolute;inset:-20px;border-radius:50%;
+  background:conic-gradient(from 0deg,rgba(242,184,75,0),rgba(242,184,75,.25),rgba(242,184,75,0),rgba(242,184,75,.25),rgba(242,184,75,0));animation:spin 14s linear infinite}
+.cookie{position:relative;font-size:180px;line-height:1;background:none;border:0;padding:0;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;filter:drop-shadow(0 12px 22px rgba(0,0,0,.55));transition:transform .07s}
+.cookie:hover{transform:scale(1.04);border:0}
+.cookie:active{transform:scale(.93)}
+.per-click{color:var(--muted);font-size:.9rem}
+.meta{display:flex;flex-direction:column;gap:6px;margin-top:12px;width:100%}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.85rem}
+.chip.st{border-color:var(--star)}
+.chip.go{border-color:var(--gold);color:var(--gold);font-weight:700;cursor:pointer}
+.buffs{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.buff{background:#4a2e14;border:1px solid var(--gold);border-radius:999px;padding:5px 12px;font-size:.85rem;font-weight:600}
+@keyframes spin{to{transform:rotate(360deg)}}
+.float{position:fixed;pointer-events:none;font-weight:800;color:#fff;text-shadow:0 2px 4px #000;z-index:60;animation:up 1s ease-out forwards}
+@keyframes up{from{transform:translate(-50%,0);opacity:1}to{transform:translate(-50%,-90px);opacity:0}}
+
+.golden{position:fixed;width:76px;height:76px;border-radius:50%;z-index:50;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:38px;
+  background:radial-gradient(circle at 35% 35%,#fff7c9,#f2b84b 45%,#b0701a);box-shadow:0 0 28px 10px rgba(242,184,75,.65);animation:pulse .9s ease-in-out infinite alternate}
+.golden.show{display:flex}
+@keyframes pulse{from{transform:scale(.92) rotate(-8deg)}to{transform:scale(1.08) rotate(8deg)}}
+
+/* Pestañas */
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tabs button{padding:7px 10px;font-size:.88rem}
+.tab{display:none}
+.tab.active{display:block}
+.stats{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:.9rem}
+.stats div:nth-child(odd){color:var(--muted)}
+.stats div:nth-child(even){text-align:right;font-weight:600}
+.stats .sec{grid-column:1/-1;color:var(--gold)!important;font-weight:700;margin-top:8px;text-align:left!important}
+
+.achs{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.ach{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:.75rem}
+.ach .ai{font-size:1.3rem}
+.ach .an{font-weight:700;font-size:.82rem;margin:2px 0}
+.ach.locked{opacity:.4;filter:grayscale(1)}
+.ach.got{border-color:var(--gold)}
+
+.box{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+.box.st{border-color:var(--star)}
+.bignum{font-size:1.6rem;font-weight:800}
+.bar{height:10px;background:#20150e;border-radius:99px;overflow:hidden;margin:8px 0}
+.bar div{height:100%;background:linear-gradient(90deg,#6b4fa8,var(--star));width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.slot{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:.85rem}
+.slot.current{border-color:var(--gold)}
+.slot .sinfo{flex:1;min-width:0}
+.slot .sid{font-weight:700;overflow:hidden;text-overflow:ellipsis}
+.slot button{padding:5px 9px;font-size:.8rem}
+.check{display:flex;gap:8px;align-items:center;font-size:.9rem;margin:6px 0}
+
+/* Tienda */
+.item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:12px;background:var(--panel2);margin-bottom:6px;cursor:pointer;border:1px solid transparent;transition:border-color .15s,opacity .15s}
+.item .ico{font-size:1.6rem;width:36px;text-align:center}
+.item .info{flex:1;min-width:0}
+.item .nm{font-weight:700}
+.item .sub,.item .desc{font-size:.76rem;color:var(--muted)}
+.item .cnt{font-size:1.5rem;font-weight:800;color:#8d725a}
+.item.can{border-color:var(--gold)}
+.item.can .costv{color:var(--ok)}
+.item.no{opacity:.6}
+.item.no .costv{color:var(--bad)}
+.item.mystery .nm{color:#8d725a}
+.item.owned{border-color:var(--ok);opacity:.75;cursor:default}
+.item.owned .costv{color:var(--ok)}
+.costv{font-weight:700;white-space:nowrap}
+.empty{font-size:.85rem;color:var(--muted);padding:8px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:6px;max-height:38vh;overflow:auto;padding:2px}
+.tile{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 2px 4px;text-align:center;cursor:pointer;user-select:none}
+.tile .ti{font-size:1.45rem;line-height:1.2}
+.tile .tc{font-size:.62rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile.can{border-color:var(--gold)}
+.tile.can .tc{color:var(--ok)}
+.tile.no{opacity:.55}
+.tile.no .tc{color:var(--bad)}
+#tip{position:fixed;z-index:200;max-width:280px;background:#120c08;border:1px solid var(--gold);border-radius:10px;padding:10px 12px;pointer-events:none;display:none;font-size:.85rem;box-shadow:0 8px 20px rgba(0,0,0,.5)}
+#tip b{display:block;margin-bottom:3px}
+
+.toasts{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:100;max-width:330px}
+.toast{background:#3b2a1d;border:1px solid var(--gold);border-radius:12px;padding:10px 14px;box-shadow:0 8px 20px rgba(0,0,0,.4);animation:tin .25s ease-out}
+.toast b{display:block}
+.toast span{font-size:.82rem;color:var(--muted)}
+.toast.out{opacity:0;transform:translateX(30px);transition:.3s}
+@keyframes tin{from{opacity:0;transform:translateX(30px)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Izquierda -->
+  <section class="panel left">
+    <div class="news" id="news">Noticias: abre el horno, que empieza el día.</div>
+    <div class="bakery" id="bakeryName">Panadería</div>
+    <div class="count"><span id="cookies">0</span><small>galletas</small></div>
+    <div class="cps"><span id="cps">0</span> por segundo</div>
+    <div class="cookie-wrap"><button class="cookie" id="cookie" aria-label="Haz clic en la galleta">🍪</button></div>
+    <div class="per-click">+<span id="perClick">1</span> por clic</div>
+    <div class="buffs" id="buffs"></div>
+    <div class="meta" id="meta"></div>
+  </section>
+
+  <!-- Centro -->
+  <section class="panel">
+    <div class="tabs">
+      <button data-tab="stats" class="on">📊 Estadísticas</button>
+      <button data-tab="achs">🏆 Logros <span id="achCount"></span></button>
+      <button data-tab="tokens">🪙 Tokens</button>
+      <button data-tab="reb">🌟 Renacer <span id="rebTab"></span></button>
+      <button data-tab="save">💾 Guardar</button>
+    </div>
+
+    <div class="tab active" id="tab-stats"><div class="stats" id="stats"></div></div>
+
+    <div class="tab" id="tab-achs">
+      <p class="hint">Cada logro aumenta tu producción (+1 % de base). Los logros nunca se pierden al renacer.</p>
+      <div class="achs" id="achs"></div>
+    </div>
+
+    <div class="tab" id="tab-tokens">
+      <div class="box">
+        <div class="grid2">
+          <div><div class="muted">Tokens</div><div class="bignum">🪙 <span id="tokN">0</span></div></div>
+          <div><div class="muted">Multiplicador total</div><div class="bignum">×<span id="tokMult">1</span></div></div>
+        </div>
+      </div>
+      <p class="hint" id="tokExplain"></p>
+      <div class="row">
+        <button id="tok1">Comprar 1<br><small id="tokCost1"></small></button>
+        <button id="tok10">Comprar 10<br><small id="tokCost10"></small></button>
+        <button id="tokMax">Comprar máx.<br><small id="tokMaxN"></small></button>
+      </div>
+      <p class="hint" id="tokNext"></p>
+      <h3>¿Cómo funcionan?</h3>
+      <p class="hint">Cada token multiplica <b>toda</b> tu producción y tus clics, y el efecto se acumula. Cada token cuesta ×2,5 más que el anterior. <b>Los tokens no se pierden al renacer</b>, así que son una inversión para siempre. Hay mejoras normales y celestiales que hacen cada token más potente o más barato.</p>
+    </div>
+
+    <div class="tab" id="tab-reb">
+      <div class="box st">
+        <div class="grid2">
+          <div><div class="muted">Estrellas para gastar</div><div class="bignum">🌟 <span id="starAvail">0</span></div></div>
+          <div><div class="muted">Nivel de renacimiento</div><div class="bignum"><span id="starEarned">0</span></div><div class="hint" id="starBonus"></div></div>
+        </div>
+      </div>
+      <div class="box st">
+        <div>Si renaces ahora ganas <b id="rebGain">0</b> estrellas.</div>
+        <div class="bar"><div id="rebBar"></div></div>
+        <div class="hint" id="rebNext"></div>
+        <button class="big star" id="btnRebirth">🌟 Renacer</button>
+        <p class="hint"><b>Pierdes:</b> galletas, edificios y mejoras normales.<br><b>Conservas:</b> tokens, logros, estrellas, mejoras celestiales y estadísticas.<br>Cada estrella ganada da +2 % de producción para siempre, y además se puede gastar en mejoras celestiales (gastarlas no quita el bonus).</p>
+      </div>
+      <div id="autoBox" hidden>
+        <h3>⚙️ Automatizaciones</h3>
+        <label class="check" data-cel="cel_auto_click"><input type="checkbox" data-auto="click"> Ángel pulsador (clics automáticos)</label>
+        <label class="check" data-cel="cel_cont"><input type="checkbox" data-auto="upg"> Contable (compra mejoras)</label>
+        <label class="check" data-cel="cel_tes"><input type="checkbox" data-auto="tok"> Tesorero (compra tokens)</label>
+        <label class="check" data-cel="cel_arq"><input type="checkbox" data-auto="bld"> Arquitecto (compra edificios)</label>
+      </div>
+      <h3>☁️ Mejoras celestiales <span class="muted" id="celCount"></span></h3>
+      <div id="celList"></div>
+    </div>
+
+    <div class="tab" id="tab-save">
+      <div class="row"><span class="muted">Partida actual:</span> <b id="curId"></b></div>
+      <div class="row">
+        <input type="text" id="idInput" maxlength="32" placeholder="ID, p. ej. maria-2026">
+        <button id="btnSave">💾 Guardar</button>
+        <button id="btnLoad">📂 Cargar</button>
+      </div>
+      <p class="hint">Si guardas con un ID nuevo, se crea otra partida con tu progreso actual. Si cargas un ID, pasas a jugar esa partida.</p>
+      <label class="check"><input type="checkbox" id="autosave" checked> Autoguardado cada 30 segundos</label>
+      <p class="warn" id="storageWarn" hidden>Este navegador no permite guardar aquí. Usa el código de partida para no perder tu progreso.</p>
+      <h3>Partidas guardadas</h3>
+      <div id="slots"></div>
+      <h3>Código de partida</h3>
+      <p class="hint">Exporta el código para llevarte la partida a otro navegador u ordenador, y pégalo aquí para importarla.</p>
+      <textarea id="code" placeholder="Pega aquí un código de partida…"></textarea>
+      <div class="row">
+        <button id="btnExport">📤 Exportar y copiar</button>
+        <button id="btnImport">📥 Importar</button>
+      </div>
+      <h3>Zona peligrosa</h3>
+      <button id="btnReset" class="danger">🗑️ Borrar todo y empezar de cero</button>
+    </div>
+  </section>
+
+  <!-- Derecha -->
+  <section class="panel">
+    <div class="head">
+      <h2>✨ Mejoras <span class="muted" id="upgCount"></span></h2>
+      <button id="buyAll" class="small" hidden>Comprar todas</button>
+    </div>
+    <div class="tiles" id="upgrades"></div>
+    <div class="head" style="margin-top:16px">
+      <h2>🏪 Edificios</h2>
+      <div class="amt">
+        <button data-n="1" class="small on">×1</button>
+        <button data-n="10" class="small">×10</button>
+        <button data-n="100" class="small">×100</button>
+        <button data-n="max" class="small">Máx</button>
+      </div>
+    </div>
+    <div id="buildings"></div>
+  </section>
+</div>
+
+<div class="golden" id="golden" title="¡Galleta dorada!">✨</div>
+<div id="tip"></div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+"use strict";
+/* ================== FORMATO ================== */
+const SUF = [[1e60,'decillones'],[1e57,'mil nonillones'],[1e54,'nonillones'],[1e51,'mil octillones'],[1e48,'octillones'],[1e45,'mil septillones'],
+  [1e42,'septillones'],[1e39,'mil sextillones'],[1e36,'sextillones'],[1e33,'mil quintillones'],[1e30,'quintillones'],[1e27,'mil cuatrillones'],
+  [1e24,'cuatrillones'],[1e21,'mil trillones'],[1e18,'trillones'],[1e15,'mil billones'],[1e12,'billones'],[1e9,'mil millones'],[1e6,'millones']];
+function fmt(n,dec=0){
+  if (!isFinite(n)) return '∞';
+  if (n < 1e6) return n.toLocaleString('es-ES',{maximumFractionDigits: n<1000 ? dec : 0});
+  if (n >= 1e63) return n.toExponential(3).replace('.',',').replace('e+',' × 10^');
+  for (const [v,s] of SUF) if (n >= v) return (n/v).toLocaleString('es-ES',{maximumFractionDigits:3})+' '+s;
+}
+function fmtX(x){ return x < 1e6 ? x.toLocaleString('es-ES',{maximumFractionDigits:2}) : fmt(x); }
+function fmtTime(sec){
+  sec = Math.floor(sec);
+  const d = Math.floor(sec/86400), h = Math.floor(sec%86400/3600), m = Math.floor(sec%3600/60), s = sec%60;
+  return d ? `${d} d ${h} h` : h ? `${h} h ${m} min` : m ? `${m} min ${s} s` : `${s} s`;
+}
+
+/* ================== EDIFICIOS ================== */
+const B = [
+  {id:'cursor',    name:'Cursor',                    icon:'👆', cost:15,     cps:0.1,   desc:'Hace clic en la galleta por ti.'},
+  {id:'abuela',    name:'Abuela',                    icon:'👵', cost:100,    cps:1,     desc:'Hornea galletas con mucho cariño.'},
+  {id:'granja',    name:'Granja',                    icon:'🌾', cost:1100,   cps:8,     desc:'Cultiva plantas de galleta.',                gma:['👩‍🌾','Abuelas granjeras']},
+  {id:'mina',      name:'Mina',                      icon:'⛏️', cost:12000,  cps:47,    desc:'Extrae masa de galleta del subsuelo.',       gma:['👷‍♀️','Abuelas mineras']},
+  {id:'fabrica',   name:'Fábrica',                   icon:'🏭', cost:130000, cps:260,   desc:'Producción en cadena a lo grande.',          gma:['👩‍🏭','Abuelas obreras']},
+  {id:'banco',     name:'Banco',                     icon:'🏦', cost:1.4e6,  cps:1400,  desc:'Genera galletas a base de intereses.',       gma:['👩‍💼','Abuelas banqueras']},
+  {id:'templo',    name:'Templo',                    icon:'🛕', cost:2e7,    cps:7800,  desc:'Ofrendas al antiguo dios de la galleta.',    gma:['🧘‍♀️','Abuelas sacerdotisas']},
+  {id:'mago',      name:'Torre de magos',            icon:'🧙', cost:3.3e8,  cps:44000, desc:'Conjura galletas de la nada.',               gma:['🧙‍♀️','Abuelas brujas']},
+  {id:'cohete',    name:'Cohete',                    icon:'🚀', cost:5.1e9,  cps:260000,desc:'Trae galletas del planeta Galleta.',         gma:['👩‍🚀','Abuelas astronautas']},
+  {id:'portal',    name:'Portal',                    icon:'🌀', cost:7.5e10, cps:1.6e6, desc:'Abre puertas a la Dimensión Galleta.',       gma:['👽','Abuelas interdimensionales']},
+  {id:'alquimia',  name:'Laboratorio de alquimia',   icon:'⚗️', cost:1e12,   cps:1e7,   desc:'Convierte el oro en galletas.',              gma:['🧪','Abuelas alquimistas']},
+  {id:'tiempo',    name:'Máquina del tiempo',        icon:'⏰', cost:1.4e13, cps:6.5e7, desc:'Trae galletas del pasado, antes de comérselas.', gma:['🕰️','Abuelas viajeras del tiempo']},
+  {id:'antimateria',name:'Condensador de antimateria',icon:'⚛️', cost:1.7e14, cps:4.3e8, desc:'Condensa antimateria en galletas.',          gma:['🔬','Abuelas de antimateria']},
+  {id:'prisma',    name:'Prisma',                    icon:'🔺', cost:2.1e15, cps:2.9e9, desc:'Convierte la luz en galletas.',              gma:['🌈','Abuelas arcoíris']},
+  {id:'suerte',    name:'Fábrica de suerte',         icon:'🎰', cost:2.6e16, cps:2.1e10,desc:'Genera galletas de pura casualidad.',        gma:['🎲','Abuelas afortunadas']},
+  {id:'fractal',   name:'Motor fractal',             icon:'🔷', cost:3.1e17, cps:1.5e11,desc:'Galletas hechas de galletas más pequeñas.',  gma:['❄️','Abuelas fractales']},
+  {id:'consola',   name:'Consola JavaScript',        icon:'💻', cost:7.1e19, cps:1.1e12,desc:'Programa galletas directamente en la realidad.', gma:['👩‍💻','Abuelas programadoras']},
+  {id:'idleverso', name:'Idleverso',                 icon:'🪐', cost:1.2e22, cps:8.3e12,desc:'Universos enteros que hornean para ti.',     gma:['🌍','Abuelas del idleverso']},
+  {id:'cortex',    name:'Córtex galletero',          icon:'🧠', cost:1.9e24, cps:6.4e13,desc:'Un cerebro gigante que imagina galletas.',   gma:['🤓','Abuelas cerebrito']},
+  {id:'clon',      name:'Clon de ti',                icon:'🪞', cost:5.4e26, cps:5e14,  desc:'¿Quién hornea mejor que tú? Tú, otra vez.',  gma:['👯‍♀️','Abuelas clonadas']},
+  {id:'agujero',   name:'Agujero negro',             icon:'🕳️', cost:1e29,   cps:4e15,  desc:'Atrae galletas de todo el universo.',        gma:['🌑','Abuelas gravitatorias']},
+  {id:'bigbang',   name:'Big Bang',                  icon:'💥', cost:2e31,   cps:3.5e16,desc:'Crea universos hechos solo de galletas.',    gma:['🌋','Abuelas primordiales']},
+  {id:'multiverso',name:'Multiverso',                icon:'🌌', cost:5e33,   cps:3e17,  desc:'Todas las realidades a tu servicio.',        gma:['🔮','Abuelas multiversales']},
+  {id:'infinita',  name:'Galleta infinita',          icon:'♾️', cost:1e36,   cps:2.8e18,desc:'Una galleta que nunca se acaba.',            gma:['😇','Abuelas eternas']},
+];
+const BMAP = Object.fromEntries(B.map(b => [b.id,b]));
+
+/* ================== MEJORAS ================== */
+const U = [];
+const add = (id,icon,name,desc,cost,unlock,fx) => U.push({id,icon,name,desc,cost,unlock,fx});
+const TIERS = [{n:1,c:10},{n:5,c:50},{n:25,c:500},{n:50,c:5e3},{n:100,c:5e4},{n:150,c:5e5},{n:200,c:5e6},{n:250,c:5e7},{n:300,c:5e8},
+  {n:350,c:5e9},{n:400,c:5e10},{n:450,c:5e11},{n:500,c:5e12},{n:550,c:5e13},{n:600,c:5e14}];
+const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV'];
+B.forEach(b => TIERS.forEach((t,i) => {
+  const clickToo = b.id === 'cursor' && i < 3;
+  add(`${b.id}_${i}`, b.icon, `${b.name} nivel ${ROMAN[i]}`, `Producción de ${b.name} ×2${clickToo ? ' y clics ×2' : ''}.`,
+    Math.ceil(b.cost*t.c), s => s.buildings[b.id] >= t.n, m => { m.b[b.id] *= 2; if (clickToo) m.click *= 2; });
+}));
+
+// Clics
+[['click_1','👉','Dedo de plástico',2,0,500,s=>s.clicks>=50],
+ ['click_2','🦾','Dedo de acero',2,0,1e4,s=>s.clicks>=300],
+ ['click_7','🔩','Dedo de titanio',2,0,1e6,s=>s.clicks>=1000],
+ ['click_8','👊','Puño de adamantium',2,0,1e8,s=>s.clicks>=3000],
+ ['click_10','🧤','Guante de seda',2,0,1e10,s=>s.clicks>=5000],
+ ['click_11','🌠','Guante de nebulosa',2,0,1e13,s=>s.clicks>=10000],
+ ['click_3','🖱️','Ratón de oro',0,0.01,5e4,s=>s.handmade>=1e3],
+ ['click_4','💎','Ratón de diamante',0,0.01,5e6,s=>s.handmade>=1e5],
+ ['click_5','🌌','Ratón cósmico',0,0.02,5e8,s=>s.handmade>=1e7],
+ ['click_6','☄️','Ratón del multiverso',0,0.03,5e10,s=>s.handmade>=1e9],
+ ['click_9','👑','Ratón legendario',0,0.05,5e12,s=>s.handmade>=1e11],
+ ['click_12','⚛️','Ratón de antimateria',0,0.05,5e15,s=>s.handmade>=1e14],
+ ['click_13','🦖','Ratón primordial',0,0.10,5e20,s=>s.handmade>=1e18],
+ ['click_14','🌟','Ratón omnipotente',0,0.10,5e26,s=>s.handmade>=1e24],
+].forEach(([id,icon,name,mult,pct,cost,unlock]) => add(id,icon,name,
+  mult ? `Clics ×${mult}.` : `Cada clic gana además el ${Math.round(pct*100)} % de tu producción por segundo.`,
+  cost, unlock, m => { if (mult) m.click *= mult; m.clickPct += pct; }));
+
+// Mil dedos
+add('fing_1','🖐️','Mil dedos','Cursores y clics ganan +0,1 por cada edificio que no sea un cursor.',1e5, s=>s.buildings.cursor>=25, m=>m.fingers+=0.1);
+[['fing_2','🙌','Un millón de dedos',5,1e7,50],['fing_3','👐','Mil millones de dedos',10,1e9,100],['fing_4','🤲','Un billón de dedos',20,1e11,150],
+ ['fing_5','♾️','Dedos infinitos',20,1e13,200],['fing_6','🫴','Dedos cuánticos',20,1e16,250],['fing_7','🫱','Dedos multiversales',20,1e20,300],
+ ['fing_8','✨','Dedos omnipresentes',20,1e25,400]]
+  .forEach(([id,icon,name,x,cost,n],i,arr) => add(id,icon,name,`El efecto de «Mil dedos» ×${x}.`,cost,
+    s => s.buildings.cursor>=n && OWN.has(i ? arr[i-1][0] : 'fing_1'), m => m.fingersMult *= x));
+
+// Sabores (producción global)
+[['g_1','🍫','Chips de chocolate',1.10,1e5],['f_1','🥥','Coco tostado',1.05,3e5],['g_2','🧈','Mantequilla francesa',1.10,1e6],['f_2','🌰','Avellanas tostadas',1.10,3e6],
+ ['g_3','🟤','Azúcar moreno',1.15,1e7],['f_3','🍮','Caramelo salado',1.10,3e7],['g_4','🌸','Vainilla de Madagascar',1.20,1e8],['f_4','🟢','Pistacho siciliano',1.15,3e8],
+ ['g_5','☁️','Harina celestial',1.25,1e9],['f_5','🤍','Chocolate blanco',1.20,3e9],['f_6','🥜','Nueces de macadamia',1.20,3e10],['g_6','📜','Receta secreta de la abuela',1.50,1e11],
+ ['f_7','🍵','Matcha de Uji',1.25,3e11],['f_8','🖤','Chocolate negro 85 %',1.30,3e12],['g_7','🔮','Esencia de galleta pura',2,1e13],['f_9','🪵','Canela de Ceilán',1.40,3e13],
+ ['f_10','⭐','Polvo de estrellas',1.50,3e14],['f_11','⏳','Galleta de la eternidad',2,1e16]]
+  .forEach(([id,icon,name,x,cost]) => add(id,icon,name, x>=2 ? `Toda la producción ×${x}.` : `Toda la producción +${Math.round((x-1)*100)} %.`, cost, s=>s.total>=cost/2, m=>m.cps*=x));
+['🍄 Trufa negra','🌼 Azafrán','💜 Miel de lavanda','🌶️ Pimienta rosa','🍋 Lima kaffir','🍊 Yuzu','💗 Chocolate rubí','🥮 Praliné','🍬 Turrón de Jijona','🍡 Mazapán de Toledo',
+ '🍮 Crema catalana','🥛 Dulce de leche','☕ Tiramisú','🍓 Frambuesa liofilizada','🥭 Mango alfonso','🧂 Sal de Maldon','🪙 Oro comestible','🍞 Masa madre milenaria',
+ '🦄 Mantequilla de unicornio','🌫️ Azúcar de nebulosa','☄️ Chocolate de cometa','🕳️ Harina de agujero negro','💥 Esencia de supernova','⚛️ Cacao cuántico',
+ '🌌 Vainilla multiversal','🔋 Glaseado de antimateria','🎆 Receta del Big Bang','🌀 Sabor primigenio','🏆 La galleta perfecta']
+  .forEach((s,i) => { const [icon,...nm] = s.split(' '); const x = i < 10 ? 1.5 : 2; const cost = 1e17*Math.pow(10,i);
+    add('f_'+(12+i), icon, nm.join(' '), x>=2 ? `Toda la producción ×2.` : `Toda la producción +50 %.`, cost, st=>st.total>=cost/2, m=>m.cps*=x); });
+
+// Producción en masa
+add('mass_1','🏗️','Producción en masa','+0,1 % de producción por cada edificio que tengas.',1e12, s=>totalBuildings(s)>=500, m=>m.cps*=1+0.001*totalBuildings(S));
+add('mass_2','🌆','Megaproducción','Otro +0,1 % de producción por cada edificio.',1e20, s=>totalBuildings(s)>=1500, m=>m.cps*=1+0.001*totalBuildings(S));
+add('mass_3','🌍','Producción planetaria','Otro +0,2 % de producción por cada edificio.',1e28, s=>totalBuildings(s)>=3000, m=>m.cps*=1+0.002*totalBuildings(S));
+
+// Gatitos
+[['kit_1','🐱','Gatito becario',0.005,9e5,15],['kit_2','😺','Gatito trabajador',0.0075,9e7,25],['kit_3','😸','Gatito ingeniero',0.01,9e9,35],
+ ['kit_4','😼','Gatito gerente',0.0125,9e11,45],['kit_5','😻','Gatito director general',0.015,9e13,55],['kit_6','🐈','Gatito consultor',0.02,9e15,70],
+ ['kit_7','🐈‍⬛','Gatito accionista',0.025,9e17,90],['kit_8','🦁','Gatito magnate',0.03,9e19,110],['kit_9','🐯','Gatito emperador',0.035,9e21,140],
+ ['kit_10','🐉','Gatito cósmico',0.04,9e23,170]]
+  .forEach(([id,icon,name,k,cost,n]) => add(id,icon,name,`+${(k*100).toLocaleString('es-ES')} % de producción por cada logro.`,cost, s=>s.achievements.length>=n, m=>m.kitten+=k));
+
+// Galletas doradas
+add('gold_1','🍀','Trébol de cuatro hojas','Las galletas doradas salen el doble de a menudo.',777777, s=>s.golden>=3, m=>m.golden*=2);
+add('gold_2','🧲','Herradura dorada','Las galletas doradas duran el doble en pantalla.',77777777, s=>s.golden>=15, m=>m.goldenDur*=2);
+add('gold_3','💰','Bolsa de la suerte','Los premios de suerte ×2.',7.7e6, s=>s.golden>=7, m=>m.lucky*=2);
+add('gold_4','⌛','Reloj de arena dorado','Frenesí y clic frenético duran el doble.',7.7e9, s=>s.golden>=27, m=>m.effDur*=2);
+add('gold_5','🌧️','Lluvia dorada','Las galletas doradas salen un 50 % más a menudo.',7.7e11, s=>s.golden>=50, m=>m.golden*=1.5);
+add('gold_6','🧿','Imán dorado','Las galletas doradas salen un 50 % más a menudo.',7.7e14, s=>s.golden>=100, m=>m.golden*=1.5);
+add('gold_7','🎰','Fortuna eterna','Los premios de suerte ×3.',7.7e17, s=>s.golden>=200, m=>m.lucky*=3);
+add('gold_8','⏱️','Frenesí prolongado','Los efectos dorados duran un 50 % más.',7.7e20, s=>s.golden>=300, m=>m.effDur*=1.5);
+
+// Tokens
+add('tokup_1','✨','Tokens pulidos','Cada token multiplica un 2,5 % más.',1e9, s=>s.tokens>=5, m=>m.tokenBonus+=0.025);
+add('tokup_5','🏦','Bóveda de tokens','Los tokens cuestan un 20 % menos.',1e12, s=>s.tokens>=10, m=>m.tokenDisc*=0.8);
+add('tokup_2','🥇','Tokens de oro','Cada token multiplica un 2,5 % más.',1e14, s=>s.tokens>=15, m=>m.tokenBonus+=0.025);
+add('tokup_3','💿','Tokens de platino','Cada token multiplica un 5 % más.',1e20, s=>s.tokens>=30, m=>m.tokenBonus+=0.05);
+add('tokup_4','💎','Tokens de diamante','Cada token multiplica un 5 % más.',1e27, s=>s.tokens>=50, m=>m.tokenBonus+=0.05);
+
+// Utilidades
+add('util_1','🏷️','Cupones de descuento','Los edificios cuestan un 5 % menos.',1e6, s=>s.total>=5e5, m=>m.bDisc*=0.95);
+add('util_2','📦','Compra al por mayor','Los edificios cuestan otro 5 % menos.',1e9, s=>totalBuildings(s)>=200, m=>m.bDisc*=0.95);
+add('util_6','🏘️','Inversión inmobiliaria','Los edificios cuestan otro 10 % menos.',1e15, s=>totalBuildings(s)>=1000, m=>m.bDisc*=0.9);
+add('util_7','🧱','Arquitectura modular','Los edificios cuestan otro 10 % menos.',1e22, s=>totalBuildings(s)>=2500, m=>m.bDisc*=0.9);
+add('util_3','🤝','Negociador nato','Las mejoras cuestan un 10 % menos.',1e7, s=>s.upgrades.length>=20, m=>m.uDisc*=0.9);
+add('util_8','📉','Proveedor mayorista','Las mejoras cuestan otro 10 % menos.',1e14, s=>s.upgrades.length>=150, m=>m.uDisc*=0.9);
+add('util_4','🌙','Abuelas noctámbulas','Mientras no juegas produces al 75 % en lugar del 50 %.',1e6, s=>s.played>=1800, m=>m.offline+=0.25);
+add('util_5','🌃','Turno de noche','Mientras no juegas produces al 100 %.',1e9, s=>s.played>=7200 && OWN.has('util_4'), m=>m.offline+=0.25);
+
+// Tipos de abuela
+B.filter(b => b.gma).forEach((b,k) => {
+  const per = k+1;
+  add('gma_'+b.id, b.gma[0], b.gma[1], `Abuelas ×2. ${b.name} +1 % por cada ${per>1 ? per+' abuelas' : 'abuela'}.`, b.cost*50,
+    s => s.buildings.abuela>=1 && s.buildings[b.id]>=15, m => { m.b.abuela *= 2; m.b[b.id] *= 1 + 0.01*S.buildings.abuela/per; });
+});
+
+// Sinergias
+const SYN = [['granja','fabrica','🚜','Tractores automáticos'],['mina','cohete','☄️','Minería de asteroides'],['fabrica','banco','📈','Acciones de la fábrica'],
+ ['banco','portal','💱','Banca interdimensional'],['templo','mago','🕯️','Rituales arcanos'],['cursor','fabrica','🤖','Robots pulsadores'],
+ ['abuela','templo','🙏','Abuelas devotas'],['mina','mago','💠','Gemas encantadas'],['alquimia','mina','🪨','Piedra filosofal'],['tiempo','granja','🌱','Cosechas del futuro'],
+ ['antimateria','fabrica','🔋','Reactor de antimateria'],['prisma','templo','⛪','Vidrieras sagradas'],['suerte','banco','💸','Lotería bancaria'],
+ ['fractal','alquimia','🧬','Alquimia recursiva'],['consola','cortex','🧩','Red neuronal'],['idleverso','portal','🚪','Puertas al idleverso'],
+ ['cortex','mago','💭','Magia mental'],['clon','abuela','👭','Abuelas clonadas en serie'],['agujero','cohete','🛸','Navegación gravitatoria'],
+ ['bigbang','prisma','🎆','Luz primordial'],['multiverso','idleverso','🌐','Red de universos'],['infinita','clon','♾️','Bucle infinito']];
+SYN.forEach(([a,c,icon,name]) => {
+  const ba = BMAP[a], bb = BMAP[c];
+  add(`syn_${a}_${c}`, icon, name, `${ba.name} +2 % por cada ${bb.name}; ${bb.name} +0,1 % por cada ${ba.name}.`,
+    Math.max(ba.cost,bb.cost)*30, s => s.buildings[a]>=15 && s.buildings[c]>=15,
+    m => { m.b[a] *= 1 + 0.02*S.buildings[c]; m.b[c] *= 1 + 0.001*S.buildings[a]; });
+});
+const UMAP = Object.fromEntries(U.map(u => [u.id,u]));
+
+/* ================== MEJORAS CELESTIALES ================== */
+const C = [
+  {id:'cel_start1',icon:'🌅',name:'Comienzo bendito',desc:'Empiezas cada renacimiento con 10 cursores y 5 abuelas.',cost:1},
+  {id:'cel_click1',icon:'✋',name:'Manos divinas',desc:'Clics ×10.',cost:3,fx:m=>m.click*=10},
+  {id:'cel_gold1',icon:'🍀',name:'Suerte divina',desc:'Las galletas doradas salen el doble de a menudo.',cost:5,fx:m=>m.golden*=2},
+  {id:'cel_pot1',icon:'✨',name:'Potencial celestial I',desc:'Cada estrella da +3 % de producción en lugar de +2 %.',cost:8,fx:m=>m.starPct+=0.01},
+  {id:'cel_save1',icon:'🐷',name:'Hucha celestial',desc:'Empiezas cada renacimiento con 1 millón de galletas.',cost:10},
+  {id:'cel_auto_click',icon:'👼',name:'Ángel pulsador',desc:'Hace 10 clics por segundo por ti.',cost:15,fx:m=>m.autoClick+=10},
+  {id:'cel_tok1',icon:'🪙',name:'Tokens benditos',desc:'Cada token multiplica un 5 % más.',cost:20,fx:m=>m.tokenBonus+=0.05},
+  {id:'cel_off',icon:'😴',name:'Sueño celestial',desc:'Mientras no juegas produces al 100 % y hasta 72 horas.',cost:20,fx:m=>{m.offline+=0.5;m.offlineCap=259200}},
+  {id:'cel_cont',icon:'🧮',name:'Contable celestial',desc:'Compra mejoras automáticamente.',cost:25},
+  {id:'cel_bld',icon:'🏷️',name:'Rebajas celestiales',desc:'Los edificios cuestan un 10 % menos.',cost:30,fx:m=>m.bDisc*=0.9},
+  {id:'cel_upg',icon:'🛒',name:'Mercado celestial',desc:'Las mejoras cuestan un 25 % menos.',cost:40,fx:m=>m.uDisc*=0.75},
+  {id:'cel_arq',icon:'📐',name:'Arquitecto celestial',desc:'Compra edificios automáticamente (el que más rinde por galleta).',cost:50},
+  {id:'cel_prod1',icon:'🙌',name:'Bendición menor',desc:'Toda la producción ×2.',cost:50,fx:m=>m.cps*=2},
+  {id:'cel_gold2',icon:'🔥',name:'Frenesí eterno',desc:'El frenesí da ×10 en lugar de ×7 y los efectos dorados duran el doble.',cost:60,fx:m=>{m.frenzy=10;m.effDur*=2}},
+  {id:'cel_tok2',icon:'⚒️',name:'Acuñación divina',desc:'Los tokens cuestan la mitad.',cost:75,fx:m=>m.tokenDisc*=0.5},
+  {id:'cel_tes',icon:'🏛️',name:'Tesorero celestial',desc:'Compra tokens automáticamente.',cost:100},
+  {id:'cel_ach',icon:'🏆',name:'Vitrina de trofeos',desc:'Cada logro da +2 % de producción en lugar de +1 %.',cost:100,fx:m=>m.achPct+=0.01},
+  {id:'cel_kit',icon:'🐈',name:'Gatitos celestiales',desc:'Los gatitos son el doble de eficaces.',cost:150,fx:m=>m.kittenMult*=2},
+  {id:'cel_save2',icon:'💎',name:'Cofre celestial',desc:'Empiezas cada renacimiento con 1 billón de galletas.',cost:200,req:'cel_save1'},
+  {id:'cel_pot2',icon:'💫',name:'Potencial celestial II',desc:'Cada estrella da +1 % más de producción.',cost:250,req:'cel_pot1',fx:m=>m.starPct+=0.01},
+  {id:'cel_prod2',icon:'🌈',name:'Bendición mayor',desc:'Toda la producción ×3.',cost:300,req:'cel_prod1',fx:m=>m.cps*=3},
+  {id:'cel_auto_click2',icon:'🎶',name:'Coro de ángeles',desc:'El ángel pulsador hace 50 clics por segundo más.',cost:400,req:'cel_auto_click',fx:m=>m.autoClick+=50},
+  {id:'cel_start2',icon:'🏰',name:'Comienzo glorioso',desc:'Empiezas cada renacimiento con 50 de cada uno de los 5 primeros edificios.',cost:500,req:'cel_start1'},
+  {id:'cel_tok3',icon:'🐉',name:'Tesoro del dragón',desc:'Cada token multiplica un 10 % más.',cost:1000,req:'cel_tok1',fx:m=>m.tokenBonus+=0.10},
+  {id:'cel_click2',icon:'🫳',name:'Toque de Midas',desc:'Cada clic gana además el 10 % de tu producción por segundo.',cost:1000,req:'cel_click1',fx:m=>m.clickPct+=0.10},
+  {id:'cel_prod3',icon:'☀️',name:'Bendición suprema',desc:'Toda la producción ×5.',cost:2000,req:'cel_prod2',fx:m=>m.cps*=5},
+  {id:'cel_pot3',icon:'🌠',name:'Potencial celestial III',desc:'Cada estrella da +2 % más de producción.',cost:3000,req:'cel_pot2',fx:m=>m.starPct+=0.02},
+  {id:'cel_save3',icon:'👑',name:'Tesoro celestial',desc:'Empiezas cada renacimiento con 1 trillón de galletas.',cost:5000,req:'cel_save2'},
+  {id:'cel_prod4',icon:'🌌',name:'Bendición cósmica',desc:'Toda la producción ×10.',cost:20000,req:'cel_prod3',fx:m=>m.cps*=10},
+  {id:'cel_prod5',icon:'🪐',name:'Bendición universal',desc:'Toda la producción ×25.',cost:250000,req:'cel_prod4',fx:m=>m.cps*=25},
+];
+const CMAP = Object.fromEntries(C.map(c => [c.id,c]));
+
+/* ================== LOGROS ================== */
+const A = [];
+const ach = (id,icon,name,desc,check,secret=false) => A.push({id,icon,name,desc,check,secret});
+[[1,'Primera galleta'],[100,'Merienda'],[1e3,'Horno caliente'],[1e4,'Panadería de barrio'],[1e5,'Pastelero profesional'],[1e6,'Millonario de azúcar'],
+ [1e7,'Imperio de masa'],[1e8,'Galaxia de chocolate'],[1e9,'Mil millones de migas'],[1e10,'Leyenda galletera'],[1e12,'Billonario'],[1e15,'Fin de la escasez'],
+ [1e18,'Trillonario'],[1e21,'Océano de galletas'],[1e24,'Planeta galleta'],[1e27,'Sistema solar dulce'],[1e30,'Quintillonario'],[1e33,'Galaxia horneada'],
+ [1e36,'Universo de migas'],[1e40,'Más allá del horno'],[1e45,'Infinito dulce'],[1e50,'El horno eterno']]
+  .forEach(([n,name]) => ach('t'+n,'🍪',name,`Hornea ${fmt(n)} galleta${n>1?'s':''} en total.`, s=>s.allTime>=n));
+[[1,'¡Clic!'],[100,'Dedo ágil'],[1000,'Tendinitis'],[5000,'Clic maestro'],[25000,'Ratón destrozado'],[100000,'Leyenda del clic']]
+  .forEach(([n,name]) => ach('c'+n,'👆',name,`Haz clic ${fmt(n)} ${n>1?'veces':'vez'}.`, s=>s.clicks>=n));
+[[10,'Producción casera'],[100,'Negocio en marcha'],[1000,'Cadena de montaje'],[1e4,'Multinacional'],[1e5,'Monopolio galletero'],[1e6,'Singularidad dulce'],
+ [1e8,'Producción industrial'],[1e10,'Potencia planetaria'],[1e12,'Fuerza galáctica'],[1e15,'Energía cósmica'],[1e18,'Horno estelar'],[1e21,'Singularidad horneada'],[1e25,'Omnipotencia dulce']]
+  .forEach(([n,name]) => ach('p'+n,'⚡',name,`Produce ${fmt(n)} galletas por segundo.`, ()=>R.base>=n));
+B.forEach(b => [[1,'El primero'],[50,'Colección'],[100,'Centenario'],[200,'Bicentenario'],[300,'Imperio'],[500,'Leyenda']].forEach(([n,lab]) =>
+  ach(`b_${b.id}_${n}`, b.icon, `${b.name}: ${lab}`, `Ten ${n} × ${b.name}.`, s=>s.buildings[b.id]>=n)));
+[[100,'Urbanista'],[500,'Metrópolis galletera'],[1000,'Megalópolis'],[2500,'Continente de edificios'],[5000,'Planeta urbanizado']]
+  .forEach(([n,name]) => ach('bt'+n,'🏙️',name,`Ten ${fmt(n)} edificios a la vez.`, s=>totalBuildings(s)>=n));
+[[10,'Mejorando'],[25,'Tecnócrata'],[50,'Todo optimizado'],[100,'Coleccionista de mejoras'],[150,'Perfeccionista'],[200,'Ingeniero jefe'],[300,'Científico loco'],[400,'Más allá de la ciencia']]
+  .forEach(([n,name]) => ach('u'+n,'✨',name,`Ten ${n} mejoras a la vez.`, s=>s.upgrades.length>=n));
+[[1,'Suerte dorada'],[7,'Afortunado'],[27,'Imán de la suerte'],[77,'Rey Midas'],[277,'Lluvia de oro'],[777,'Dios de la fortuna']]
+  .forEach(([n,name]) => ach('gc'+n,'🌟',name,`Pulsa ${n} galleta${n>1?'s':''} dorada${n>1?'s':''}.`, s=>s.golden>=n));
+[[1,'Primer token'],[5,'Inversor'],[10,'Coleccionista de tokens'],[25,'Magnate'],[50,'Banco central'],[75,'Reserva mundial'],[100,'Tokenizador supremo']]
+  .forEach(([n,name]) => ach('tk'+n,'🪙',name,`Ten ${n} token${n>1?'s':''}.`, s=>s.tokens>=n));
+[[1,'Renacido'],[5,'Ciclo de la vida'],[10,'Reencarnación experta'],[25,'Fénix galletero'],[50,'Eterno retorno'],[100,'Más allá del tiempo']]
+  .forEach(([n,name]) => ach('rb'+n,'🔁',name,`Renace ${n} ${n>1?'veces':'vez'}.`, s=>s.rebirths>=n));
+[[1,'Primera estrella'],[10,'Constelación'],[100,'Vía Láctea'],[1000,'Cúmulo estelar'],[10000,'Supercúmulo'],[100000,'Universo brillante']]
+  .forEach(([n,name]) => ach('st'+n,'🌠',name,`Consigue ${fmt(n)} estrella${n>1?'s':''} en total.`, s=>s.starsEarned>=n));
+ach('cel_5','☁️','Pies en las nubes','Compra 5 mejoras celestiales.', s=>s.celestial.length>=5);
+ach('cel_15','⛅','Ciudadano del cielo','Compra 15 mejoras celestiales.', s=>s.celestial.length>=15);
+ach('cel_all','🌤️','Señor del cielo','Compra todas las mejoras celestiales.', s=>s.celestial.length>=C.length);
+ach('s_fast','🔥','Dedos de fuego','Haz 15 clics en un segundo.', s=>s.flags.fast, true);
+ach('s_hour','🕰️','Paciencia de abuela','Juega durante 1 hora.', s=>s.played>=3600, true);
+ach('s_day','📅','Panadero dedicado','Juega durante 24 horas.', s=>s.played>=86400, true);
+ach('s_save','📌','Precavido','Guarda la partida a mano.', s=>s.saves>=1, true);
+ach('s_export','📦','Mudanza','Exporta tu código de partida.', s=>s.flags.exported, true);
+ach('s_noob','✋','Hecho a mano','Hornea 1.000 galletas sin tener edificios.', s=>s.total>=1000 && totalBuildings(s)===0, true);
+ach('s_gift','🎁','Regalo dorado','Consigue un token de una galleta dorada.', s=>s.flags.gift, true);
+ach('s_night','🦉','Búho nocturno','Juega a las 3 de la madrugada.', s=>s.flags.night, true);
+ach('s_frenzy','🌪️','Tormenta perfecta','Ten frenesí y clic frenético a la vez.', s=>s.flags.combo, true);
+const ASET = new Set(A.map(a => a.id));
+
+/* ================== ESTADO ================== */
+const PREFIX = 'galletaClicker_save_', LAST_KEY = 'galletaClicker_lastId', AUTO_KEY = 'galletaClicker_auto';
+const TOKEN_BASE = 1e6, TOKEN_R = 2.5;
+function fresh(){
+  return {v:2,cookies:0,total:0,allTime:0,clicks:0,handmade:0,golden:0,played:0,saves:0,maxCps:0,
+    buildings:Object.fromEntries(B.map(b=>[b.id,0])),upgrades:[],achievements:[],flags:{},
+    tokens:0,stars:0,starsEarned:0,rebirths:0,celestial:[],auto:{click:true,upg:true,bld:true,tok:true},
+    start:Date.now(),runStart:Date.now(),last:Date.now()};
+}
+let S = fresh();
+let OWN = new Set(), CEL = new Set();
+let R = {m:null,base:0,cps:0,click:1,bc:{},unit:{},achMult:1,tokMult:1,starMult:1,global:1};
+let buffs = {frenzy:0, clickFrenzy:0};
+let buyN = 1, currentId = '', autosave = true, clickTimes = [];
+const syncSets = () => { OWN = new Set(S.upgrades); CEL = new Set(S.celestial); };
+
+const storage = {
+  ok:(()=>{try{const k='__t';localStorage.setItem(k,'1');localStorage.removeItem(k);return true}catch(e){return false}})(),
+  get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}},
+  del(k){try{localStorage.removeItem(k)}catch(e){}},
+  keys(){try{return Object.keys(localStorage)}catch(e){return []}}
+};
+
+/* ================== UTILIDADES ================== */
+const $ = s => document.querySelector(s);
+function setText(el,v){ if (el.textContent !== v) el.textContent = v; }
+function setHTML(el,v){ if (el.innerHTML !== v) el.innerHTML = v; }
+function totalBuildings(s){ let t = 0; for (const k in s.buildings) t += s.buildings[k]; return t; }
+const rand = (a,b) => a + Math.random()*(b-a);
+function sanitizeId(id){ return (id||'').trim().toLowerCase().replace(/[^a-z0-9ñáéíóúü_-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,32); }
+function randomId(){ return 'galleta-' + Math.random().toString(36).slice(2,6); }
+function earn(v){ S.cookies += v; S.total += v; S.allTime += v; }
+function toast(title, sub=''){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<b></b>${sub ? '<span></span>' : ''}`;
+  t.querySelector('b').textContent = title;
+  if (sub) t.querySelector('span').textContent = sub;
+  const box = $('#toasts');
+  box.appendChild(t);
+  while (box.children.length > 5) box.firstChild.remove();
+  setTimeout(()=>{ t.classList.add('out'); setTimeout(()=>t.remove(),300); }, 3800);
+}
+function twoClick(btn, fn){
+  if (btn.dataset.armed){ clearTimeout(+btn.dataset.armed); delete btn.dataset.armed; btn.classList.remove('armed'); btn.innerHTML = btn.dataset.label; fn(); return; }
+  btn.dataset.label = btn.innerHTML;
+  btn.classList.add('armed'); btn.textContent = '¿Seguro? Pulsa otra vez';
+  btn.dataset.armed = setTimeout(() => { delete btn.dataset.armed; btn.classList.remove('armed'); btn.innerHTML = btn.dataset.label; }, 3000);
+}
+
+/* ================== CÁLCULOS ================== */
+function calc(){
+  const m = {click:1,cps:1,clickPct:0,golden:1,goldenDur:1,effDur:1,lucky:1,offline:0.5,offlineCap:86400,bDisc:1,uDisc:1,
+    kitten:0,kittenMult:1,fingers:0,fingersMult:1,tokenBonus:0.10,tokenDisc:1,starPct:0.02,achPct:0.01,frenzy:7,autoClick:0,b:{}};
+  B.forEach(b => m.b[b.id] = 1);
+  for (const id of S.celestial){ const c = CMAP[id]; if (c && c.fx) c.fx(m); }
+  for (const id of S.upgrades){ const u = UMAP[id]; if (u) u.fx(m); }
+  const nAch = S.achievements.length;
+  const achMult = (1 + nAch*m.achPct) * (1 + m.kitten*m.kittenMult*nAch);
+  const tokMult = Math.pow(1 + m.tokenBonus, S.tokens);
+  const starMult = 1 + S.starsEarned*m.starPct;
+  const global = m.cps * achMult * tokMult * starMult;
+  const fingers = m.fingers * m.fingersMult * (totalBuildings(S) - S.buildings.cursor);
+  let base = 0; const bc = {}, unit = {};
+  B.forEach(b => { unit[b.id] = (b.cps + (b.id==='cursor' ? fingers : 0)) * m.b[b.id] * global; bc[b.id] = unit[b.id]*S.buildings[b.id]; base += bc[b.id]; });
+  const now = Date.now();
+  const cps = base * (buffs.frenzy > now ? m.frenzy : 1);
+  let click = (1 + fingers) * m.click * tokMult * starMult + cps*m.clickPct;
+  if (buffs.clickFrenzy > now) click *= 777;
+  R = {m,base,cps,click,bc,unit,achMult,tokMult,starMult,global};
+}
+function bCost(b, n){
+  const r = 1.15;
+  return Math.ceil(b.cost * Math.pow(r,S.buildings[b.id]) * (Math.pow(r,n)-1)/(r-1) * (R.m ? R.m.bDisc : 1));
+}
+function bMaxN(b){
+  const r = 1.15, c0 = b.cost*Math.pow(r,S.buildings[b.id])*(R.m ? R.m.bDisc : 1);
+  if (S.cookies < c0) return 0;
+  let n = Math.floor(Math.log(S.cookies*(r-1)/c0 + 1)/Math.log(r));
+  while (n > 0 && bCost(b,n) > S.cookies) n--;
+  return n;
+}
+const uCost = u => Math.ceil(u.cost * (R.m ? R.m.uDisc : 1));
+function tokCost(n){ return TOKEN_BASE*R.m.tokenDisc*Math.pow(TOKEN_R,S.tokens)*(Math.pow(TOKEN_R,n)-1)/(TOKEN_R-1); }
+function tokMaxN(){
+  const c0 = TOKEN_BASE*R.m.tokenDisc*Math.pow(TOKEN_R,S.tokens);
+  if (S.cookies < c0) return 0;
+  let n = Math.floor(Math.log(S.cookies*(TOKEN_R-1)/c0 + 1)/Math.log(TOKEN_R));
+  while (n > 0 && tokCost(n) > S.cookies) n--;
+  return n;
+}
+const potentialStars = () => Math.floor(Math.cbrt(S.allTime/1e9) + 1e-9);
+const rebirthGain = () => Math.max(0, potentialStars() - S.starsEarned);
+const availUpgrades = () => U.filter(u => !OWN.has(u.id) && u.unlock(S)).sort((a,b) => a.cost-b.cost);
+
+/* ================== ACCIONES ================== */
+function clickCookie(e){
+  calc();
+  const v = R.click;
+  earn(v); S.handmade += v; S.clicks++;
+  const now = performance.now();
+  clickTimes.push(now);
+  clickTimes = clickTimes.filter(t => now - t < 1000);
+  if (clickTimes.length >= 15) S.flags.fast = true;
+  const f = document.createElement('div');
+  f.className = 'float';
+  f.textContent = '+' + fmt(v,1);
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = e.clientX || rect.left + rect.width/2, y = e.clientY || rect.top + rect.height/3;
+  f.style.left = (x + rand(-12,12)) + 'px';
+  f.style.top = (y - 20) + 'px';
+  document.body.appendChild(f);
+  setTimeout(()=>f.remove(), 1000);
+}
+function buyBuilding(b){
+  const n = buyN === 'max' ? bMaxN(b) : buyN;
+  if (n < 1) return;
+  const c = bCost(b,n);
+  if (S.cookies < c) return;
+  S.cookies -= c;
+  S.buildings[b.id] += n;
+  calc(); renderStore();
+}
+function buyUpgrade(u){
+  const c = uCost(u);
+  if (S.cookies < c || OWN.has(u.id)) return false;
+  S.cookies -= c;
+  S.upgrades.push(u.id); OWN.add(u.id);
+  calc();
+  return true;
+}
+function buyAllUpgrades(silent=false){
+  let n = 0, guard = 500;
+  while (guard--){
+    const u = availUpgrades().find(u => S.cookies >= uCost(u));
+    if (!u || !buyUpgrade(u)) break;
+    n++;
+  }
+  if (!silent) toast(n ? `✨ Has comprado ${n} mejora${n>1?'s':''}` : 'Todavía no te llega para ninguna mejora');
+  return n;
+}
+function buyTokens(n){
+  calc();
+  if (n < 1) return 0;
+  const c = tokCost(n);
+  if (S.cookies < c) return 0;
+  S.cookies -= c; S.tokens += n;
+  calc();
+  return n;
+}
+function buyCel(c){
+  if (CEL.has(c.id) || S.stars < c.cost || (c.req && !CEL.has(c.req))) return;
+  S.stars -= c.cost;
+  S.celestial.push(c.id); CEL.add(c.id);
+  calc(); celKey = null; renderRebirth(); renderAutoBox();
+  toast(`☁️ ${c.name}`, c.desc);
+}
+function rebirth(){
+  const g = rebirthGain();
+  if (g < 1){ toast('Todavía no puedes renacer', 'Necesitas ganar al menos 1 estrella.'); return; }
+  S.stars += g; S.starsEarned += g; S.rebirths++;
+  S.cookies = 0; S.total = 0; S.upgrades = []; S.runStart = Date.now();
+  S.buildings = fresh().buildings;
+  buffs = {frenzy:0, clickFrenzy:0}; hideGolden();
+  if (CEL.has('cel_start1')){ S.buildings.cursor = 10; S.buildings.abuela = 5; }
+  if (CEL.has('cel_start2')) B.slice(0,5).forEach(b => S.buildings[b.id] = Math.max(S.buildings[b.id],50));
+  S.cookies = CEL.has('cel_save3') ? 1e18 : CEL.has('cel_save2') ? 1e12 : CEL.has('cel_save1') ? 1e6 : 0;
+  syncSets(); calc(); upgKey = null; celKey = null; achDirty = true;
+  renderAll(); saveTo(currentId);
+  toast(`🌟 ¡Has renacido! +${fmt(g)} estrellas`, `Ahora produces un +${fmt(S.starsEarned*R.m.starPct*100)} % extra para siempre.`);
+}
+
+/* ================== AUTOMATIZACIONES ================== */
+function autoRun(){
+  calc();
+  if (CEL.has('cel_cont') && S.auto.upg) buyAllUpgrades(true);
+  if (CEL.has('cel_tes') && S.auto.tok) buyTokens(tokMaxN());
+  if (CEL.has('cel_arq') && S.auto.bld){
+    let guard = 300;
+    while (guard--){
+      let best = null, bv = 0;
+      for (const b of B){ const c = bCost(b,1); if (c <= S.cookies){ const v = R.unit[b.id]/c; if (v > bv){ bv = v; best = b; } } }
+      if (!best) break;
+      S.cookies -= bCost(best,1); S.buildings[best.id]++;
+      calc();
+    }
+  }
+}
+
+/* ================== GALLETA DORADA ================== */
+const goldenEl = $('#golden');
+let goldenNext = Date.now() + rand(60,180)*1000, goldenEnd = 0;
+function goldenTick(){
+  const now = Date.now();
+  if (goldenEl.classList.contains('show')){ if (now > goldenEnd) hideGolden(); }
+  else if (now > goldenNext) showGolden();
+}
+function showGolden(){
+  goldenEl.style.left = rand(5,88) + 'vw';
+  goldenEl.style.top = rand(10,82) + 'vh';
+  goldenEl.classList.add('show');
+  goldenEnd = Date.now() + 13000*(R.m ? R.m.goldenDur : 1);
+}
+function hideGolden(){
+  goldenEl.classList.remove('show');
+  goldenNext = Date.now() + rand(60,180)*1000/(R.m ? R.m.golden : 1);
+}
+goldenEl.addEventListener('click', () => {
+  S.golden++;
+  hideGolden(); calc();
+  const r = Math.random(), now = Date.now(), d = R.m.effDur;
+  if (r < 0.42){
+    const gain = (Math.min(S.cookies*0.15, R.base*900) + 13) * R.m.lucky;
+    earn(gain);
+    toast(`🍀 ¡Suerte! +${fmt(gain)} galletas`);
+  } else if (r < 0.84){
+    buffs.frenzy = now + 77000*d;
+    toast('🔥 ¡Frenesí!', `Producción ×${R.m.frenzy} durante ${fmt(77*d)} segundos`);
+  } else if (r < 0.96){
+    buffs.clickFrenzy = now + 13000*d;
+    toast('⚡ ¡Clic frenético!', `Clics ×777 durante ${fmt(13*d)} segundos`);
+  } else {
+    S.tokens++; S.flags.gift = true;
+    toast('🎁 ¡Token de regalo!', 'Una galleta dorada te ha dado un token gratis.');
+  }
+  if (buffs.frenzy > now && buffs.clickFrenzy > now) S.flags.combo = true;
+});
+
+/* ================== LOGROS ================== */
+let achDirty = true;
+function checkAch(){
+  calc();
+  if (new Date().getHours() === 3) S.flags.night = true;
+  for (const a of A){
+    if (!S.achievements.includes(a.id) && a.check(S)){
+      S.achievements.push(a.id);
+      achDirty = true;
+      toast(`🏆 Logro: ${a.name}`, a.desc);
+    }
+  }
+}
+
+/* ================== NOTICIAS ================== */
+const NEWS = [
+  () => 'Noticias: las abuelas exigen más chocolate en sus galletas.',
+  () => `Noticias: la panadería de ${currentId} ya ha horneado ${fmt(S.allTime)} galletas.`,
+  () => `Encuesta: el ${Math.floor(rand(60,99))} % de la gente prefiere galletas a las verduras.`,
+  () => S.tokens ? `Economía: el token de galleta se dispara; ya tienes ${S.tokens} y valen ×${fmtX(R.tokMult)}.` : 'Economía: rumores sobre una nueva moneda, el token de galleta.',
+  () => S.rebirths ? `Misterio: testigos aseguran haberte visto renacer ${S.rebirths} ${S.rebirths>1?'veces':'vez'}.` : 'Ciencia: los científicos estudian si es posible renacer entre galletas.',
+  () => S.buildings.abuela > 50 ? 'Alerta: las abuelas se están organizando. Nadie sabe para qué.' : 'Sociedad: crece la demanda de abuelas panaderas.',
+  () => S.buildings.granja ? 'Campo: récord de cosecha de galletas este año.' : 'Campo: los agricultores se preguntan si las galletas crecen en los árboles.',
+  () => S.buildings.cohete ? 'Espacio: un cohete vuelve cargado de galletas lunares.' : 'Espacio: la NASA niega que haya galletas en la Luna.',
+  () => S.buildings.portal ? 'Ciencia: algo sale de los portales… y huele a vainilla.' : 'Ciencia: físicos teorizan sobre una dimensión hecha de galleta.',
+  () => S.buildings.tiempo ? 'Paradoja: alguien se ha comido una galleta antes de hornearla.' : 'Tecnología: un inventor promete viajar en el tiempo «para merendar dos veces».',
+  () => S.buildings.agujero ? 'Astronomía: el agujero negro de la panadería ya ha absorbido tres galaxias de leche.' : 'Astronomía: descubren una nebulosa con forma de galleta.',
+  () => `Salud: los médicos recomiendan no comer más de ${fmt(Math.max(1,R.cps))} galletas por segundo.`,
+  () => 'Deportes: el campeonato mundial de mojar galletas en leche se aplaza por falta de leche.',
+  () => 'Cultura: estrenan un musical sobre la vida de una galleta. Críticas dulces.',
+  () => S.golden ? `Suerte: ya has atrapado ${S.golden} galletas doradas.` : 'Suerte: dicen que a veces aparecen galletas doradas. Estate atento.',
+  () => 'Gastronomía: un chef intenta hacer galletas sin azúcar. Lo detienen.',
+  () => 'Tiempo: mañana lloverán chispas de chocolate en el norte.',
+  () => S.starsEarned ? `Cielo: brillan ${fmt(S.starsEarned)} estrellas sobre tu panadería.` : 'Cielo: cuentan que quien renace vuelve con el poder de las estrellas.',
+];
+function rotateNews(){
+  const el = $('#news');
+  el.style.opacity = 0;
+  setTimeout(() => { el.textContent = NEWS[Math.floor(Math.random()*NEWS.length)](); el.style.opacity = 1; }, 400);
+}
+
+/* ================== TOOLTIP ================== */
+const tip = $('#tip'); let tipFor = null, lastPointer = 'mouse';
+function showTip(html,x,y){
+  tip.innerHTML = html; tip.style.display = 'block';
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.max(8, Math.min(x+14, innerWidth-w-8)) + 'px';
+  tip.style.top = Math.max(8, Math.min(y+14, innerHeight-h-8)) + 'px';
+}
+function hideTip(){ tip.style.display = 'none'; tipFor = null; }
+const upgTip = u => `<b>${u.icon} ${u.name}</b><div class="muted">${u.desc}</div><div style="margin-top:4px">🍪 ${fmt(uCost(u))}</div>`;
+
+/* ================== RENDER ================== */
+const BEL = {};
+function buildStore(){
+  const box = $('#buildings'); box.innerHTML = '';
+  B.forEach(b => {
+    const d = document.createElement('div');
+    d.className = 'item';
+    d.innerHTML = `<div class="ico"></div><div class="info"><div class="nm"></div><div class="sub"><span class="costv"></span> · <span class="prod"></span></div></div><div class="cnt"></div>`;
+    d.addEventListener('click', () => buyBuilding(b));
+    box.appendChild(d);
+    BEL[b.id] = {d, ico:d.querySelector('.ico'), nm:d.querySelector('.nm'), cost:d.querySelector('.costv'), prod:d.querySelector('.prod'), cnt:d.querySelector('.cnt')};
+  });
+}
+function renderStore(){
+  let mysteryShown = false;
+  B.forEach((b,i) => {
+    const e = BEL[b.id], owned = S.buildings[b.id];
+    const known = i === 0 || owned > 0 || S.total >= b.cost*0.3;
+    if (!known && mysteryShown){ e.d.style.display = 'none'; return; }
+    e.d.style.display = '';
+    if (!known) mysteryShown = true;
+    e.d.classList.toggle('mystery', !known);
+    let n = buyN === 'max' ? Math.max(1, bMaxN(b)) : buyN;
+    const c = bCost(b,n), can = S.cookies >= c;
+    e.d.classList.toggle('can', can);
+    e.d.classList.toggle('no', !can);
+    setText(e.ico, known ? b.icon : '❔');
+    setText(e.nm, known ? b.name : '???');
+    setText(e.cost, `🍪 ${fmt(c)}${n>1 ? ` (×${n})` : ''}`);
+    const share = R.base > 0 ? Math.round(R.bc[b.id]/R.base*100) : 0;
+    setText(e.prod, !known ? 'sigue horneando…' : owned ? `${fmt(R.bc[b.id],1)}/s · ${share} %` : `+${fmt(R.unit[b.id],1)}/s cada uno`);
+    setText(e.cnt, owned ? String(owned) : '');
+    const tipText = known ? `${b.desc}\nCada uno produce ${fmt(R.unit[b.id],1)} galletas/s.` : 'Hornea más para descubrirlo.';
+    if (e.d.title !== tipText) e.d.title = tipText;
+  });
+}
+
+let upgKey = null, upgEls = [];
+function renderUpgrades(){
+  const avail = availUpgrades();
+  const key = avail.map(u=>u.id).join(',') + '|' + (R.m ? R.m.uDisc : 1);
+  if (key !== upgKey){
+    upgKey = key;
+    const box = $('#upgrades'); box.innerHTML = ''; upgEls = [];
+    if (tipFor && !avail.some(u => u.id === tipFor)) hideTip();
+    if (!avail.length) box.innerHTML = '<div class="empty" style="grid-column:1/-1">Sigue horneando y comprando edificios para desbloquear mejoras.</div>';
+    avail.forEach(u => {
+      const d = document.createElement('div');
+      d.className = 'tile';
+      d.innerHTML = `<div class="ti"></div><div class="tc"></div>`;
+      d.querySelector('.ti').textContent = u.icon;
+      d.querySelector('.tc').textContent = fmt(uCost(u));
+      d.addEventListener('pointerdown', e => { lastPointer = e.pointerType; });
+      d.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse'){ tipFor = u.id; showTip(upgTip(u), e.clientX, e.clientY); } });
+      d.addEventListener('pointermove', e => { if (e.pointerType === 'mouse' && tipFor === u.id) showTip(upgTip(u), e.clientX, e.clientY); });
+      d.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+      d.addEventListener('click', e => {
+        if (lastPointer !== 'mouse' && tipFor !== u.id){ tipFor = u.id; const r = d.getBoundingClientRect(); showTip(upgTip(u)+'<div class="muted">Toca otra vez para comprar</div>', r.left, r.bottom); return; }
+        if (buyUpgrade(u)){ hideTip(); toast(`✨ ${u.name}`, u.desc); renderUpgrades(); renderStore(); }
+      });
+      box.appendChild(d);
+      upgEls.push([u,d]);
+    });
+    setText($('#upgCount'), `(${S.upgrades.length}/${U.length})`);
+  }
+  $('#buyAll').hidden = upgEls.length < 2;
+  upgEls.forEach(([u,d]) => { const can = S.cookies >= uCost(u); d.classList.toggle('can',can); d.classList.toggle('no',!can); });
+}
+
+function renderAchs(){
+  if (!achDirty) return;
+  achDirty = false;
+  const got = new Set(S.achievements);
+  const box = $('#achs'); box.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  A.forEach(a => {
+    const has = got.has(a.id), hide = a.secret && !has;
+    const d = document.createElement('div');
+    d.className = 'ach ' + (has ? 'got' : 'locked');
+    d.innerHTML = '<div class="ai"></div><div class="an"></div><div class="ad"></div>';
+    d.querySelector('.ai').textContent = hide ? '🔒' : a.icon;
+    d.querySelector('.an').textContent = hide ? '???' : a.name;
+    d.querySelector('.ad').textContent = hide ? 'Logro secreto' : a.desc;
+    frag.appendChild(d);
+  });
+  box.appendChild(frag);
+  setText($('#achCount'), `${S.achievements.length}/${A.length}`);
+}
+
+function renderStats(){
+  const rows = [
+    ['sec','Esta partida'],
+    ['Galletas en el banco', fmt(S.cookies)],
+    ['Horneadas en este renacimiento', fmt(S.total)],
+    ['Galletas por segundo', fmt(R.cps,1)],
+    ['Galletas por clic', fmt(R.click,1)],
+    ['Edificios', fmt(totalBuildings(S))],
+    ['Mejoras', `${S.upgrades.length} / ${U.length}`],
+    ['Tiempo en este renacimiento', fmtTime((Date.now()-S.runStart)/1000)],
+    ['sec','Multiplicadores'],
+    ['Tokens', `×${fmtX(R.tokMult)}`],
+    ['Estrellas', `×${fmtX(R.starMult)}`],
+    ['Logros y gatitos', `×${fmtX(R.achMult)}`],
+    ['Mejoras de producción', `×${fmtX(R.m.cps)}`],
+    ['sec','Para siempre'],
+    ['Galletas horneadas (total)', fmt(S.allTime)],
+    ['Máxima producción', fmt(S.maxCps,1)+'/s'],
+    ['Clics en la galleta', fmt(S.clicks)],
+    ['Galletas hechas a mano', fmt(S.handmade)],
+    ['Galletas doradas', fmt(S.golden)],
+    ['Tokens', fmt(S.tokens)],
+    ['Renacimientos', fmt(S.rebirths)],
+    ['Estrellas ganadas', fmt(S.starsEarned)],
+    ['Mejoras celestiales', `${S.celestial.length} / ${C.length}`],
+    ['Logros', `${S.achievements.length} / ${A.length}`],
+    ['Tiempo jugado', fmtTime(S.played)],
+    ['Partida empezada', new Date(S.start).toLocaleDateString('es-ES')],
+  ];
+  setHTML($('#stats'), rows.map(([k,v]) => k === 'sec' ? `<div class="sec">${v}</div>` : `<div>${k}</div><div>${v}</div>`).join(''));
+}
+
+function renderBuffs(){
+  const now = Date.now(), parts = [];
+  if (buffs.frenzy > now) parts.push(`🔥 Frenesí ×${R.m.frenzy} · ${Math.ceil((buffs.frenzy-now)/1000)} s`);
+  if (buffs.clickFrenzy > now) parts.push(`⚡ Clic frenético ×777 · ${Math.ceil((buffs.clickFrenzy-now)/1000)} s`);
+  setHTML($('#buffs'), parts.map(p => `<div class="buff">${p}</div>`).join(''));
+}
+
+function renderTop(){
+  setText($('#cookies'), fmt(Math.floor(S.cookies)));
+  setText($('#cps'), fmt(R.cps,1));
+  setText($('#perClick'), fmt(R.click,1));
+  document.title = `${fmt(Math.floor(S.cookies))} galletas · Galleta Clicker`;
+}
+
+function renderMeta(){
+  const g = rebirthGain();
+  let html = `<div class="chip">🪙 ${S.tokens} token${S.tokens===1?'':'s'} · ×${fmtX(R.tokMult)}</div>`;
+  if (S.starsEarned) html += `<div class="chip st">🌟 ${fmt(S.starsEarned)} estrellas · ×${fmtX(R.starMult)}</div>`;
+  if (g >= 1) html += `<div class="chip go" data-goto="reb">🌟 Renacer ahora: +${fmt(g)} estrellas</div>`;
+  setHTML($('#meta'), html);
+  setText($('#rebTab'), g >= 1 ? `(+${fmt(g)})` : '');
+}
+
+function renderTokens(){
+  const per = 1 + R.m.tokenBonus;
+  setText($('#tokN'), fmt(S.tokens));
+  setText($('#tokMult'), fmtX(R.tokMult));
+  setText($('#tokExplain'), `Cada token multiplica tu producción y tus clics por ×${fmtX(per)}. El siguiente token pasaría tu multiplicador a ×${fmtX(R.tokMult*per)}.`);
+  const c1 = tokCost(1), c10 = tokCost(10), mx = tokMaxN();
+  setText($('#tokCost1'), '🍪 ' + fmt(c1));
+  setText($('#tokCost10'), '🍪 ' + fmt(c10));
+  setText($('#tokMaxN'), mx ? `${mx} token${mx>1?'s':''}` : 'ninguno');
+  $('#tok1').disabled = S.cookies < c1;
+  $('#tok10').disabled = S.cookies < c10;
+  $('#tokMax').disabled = mx < 1;
+  setText($('#tokNext'), S.cookies < c1 ? `Te faltan ${fmt(c1 - S.cookies)} galletas para el siguiente token${R.cps > 0 ? ` (unos ${fmtTime((c1-S.cookies)/R.cps)})` : ''}.` : '');
+}
+
+let celKey = null;
+function renderRebirth(){
+  const pot = potentialStars(), g = rebirthGain();
+  setText($('#starAvail'), fmt(S.stars));
+  setText($('#starEarned'), fmt(S.starsEarned));
+  setText($('#starBonus'), `+${fmt(S.starsEarned*R.m.starPct*100)} % de producción`);
+  setText($('#rebGain'), fmt(g));
+  const prev = Math.pow(pot,3)*1e9, next = Math.pow(pot+1,3)*1e9;
+  $('#rebBar').style.width = Math.min(100, Math.max(0,(S.allTime-prev)/(next-prev)*100)) + '%';
+  setText($('#rebNext'), `Siguiente estrella al llegar a ${fmt(next)} galletas horneadas en total (llevas ${fmt(S.allTime)}).`);
+  $('#btnRebirth').disabled = g < 1;
+  const key = S.stars + '|' + S.celestial.join(',');
+  if (key !== celKey){
+    celKey = key;
+    const box = $('#celList'); box.innerHTML = '';
+    C.filter(c => !c.req || CEL.has(c.req)).sort((a,b) => (CEL.has(a.id)-CEL.has(b.id)) || a.cost-b.cost).forEach(c => {
+      const own = CEL.has(c.id), can = !own && S.stars >= c.cost;
+      const d = document.createElement('div');
+      d.className = 'item ' + (own ? 'owned' : can ? 'can' : 'no');
+      d.innerHTML = `<div class="ico"></div><div class="info"><div class="nm"></div><div class="desc"></div></div><div class="costv"></div>`;
+      d.querySelector('.ico').textContent = c.icon;
+      d.querySelector('.nm').textContent = c.name;
+      d.querySelector('.desc').textContent = c.desc;
+      d.querySelector('.costv').textContent = own ? '✔ Comprada' : `🌟 ${fmt(c.cost)}`;
+      if (!own) d.addEventListener('click', () => buyCel(c));
+      box.appendChild(d);
+    });
+    setText($('#celCount'), `(${S.celestial.length}/${C.length})`);
+  }
+}
+function renderAutoBox(){
+  let any = false;
+  document.querySelectorAll('#autoBox [data-cel]').forEach(l => {
+    const has = CEL.has(l.dataset.cel); any = any || has;
+    l.hidden = !has;
+    const cb = l.querySelector('input'); cb.checked = !!S.auto[cb.dataset.auto];
+  });
+  $('#autoBox').hidden = !any;
+}
+
+/* ================== GUARDADO ================== */
+function encode(obj){ return 'GC1:' + btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }
+function decode(str){
+  const raw = str.trim().replace(/^GC1:/,'');
+  const obj = JSON.parse(decodeURIComponent(escape(atob(raw))));
+  if (typeof obj !== 'object' || typeof obj.cookies !== 'number') throw new Error('Código no válido');
+  return obj;
+}
+function applyState(obj, offline=true){
+  S = Object.assign(fresh(), obj);
+  S.buildings = Object.assign(fresh().buildings, obj.buildings || {});
+  S.upgrades = (obj.upgrades || []).filter(id => UMAP[id]);
+  S.achievements = (obj.achievements || []).filter(id => ASET.has(id));
+  S.celestial = (obj.celestial || []).filter(id => CMAP[id]);
+  S.flags = obj.flags || {};
+  S.auto = Object.assign({click:true,upg:true,bld:true,tok:true}, obj.auto || {});
+  if (!obj.allTime) S.allTime = Math.max(S.total || 0, 0);
+  if (!obj.runStart) S.runStart = S.start;
+  buffs = {frenzy:0, clickFrenzy:0};
+  syncSets(); calc();
+  if (offline && obj.last){
+    const elapsed = Math.min((Date.now() - obj.last)/1000, R.m.offlineCap);
+    const rate = Math.min(R.m.offline, 1);
+    const gain = R.base * elapsed * rate;
+    if (elapsed > 60 && gain > 0){
+      earn(gain);
+      toast(`😴 Mientras no estabas: +${fmt(gain)} galletas`, `Tus edificios trabajaron ${fmtTime(elapsed)} al ${Math.round(rate*100)} % de su ritmo.`);
+    }
+  }
+  achDirty = true; upgKey = null; celKey = null;
+  renderAll();
+}
+function saveTo(id, manual=false){
+  id = sanitizeId(id);
+  if (!id){ toast('⚠️ Escribe un ID válido'); return; }
+  if (manual) S.saves++;
+  S.last = Date.now();
+  if (!storage.set(PREFIX + id, encode(S))){ if (manual) toast('⚠️ No se pudo guardar', 'Usa el código de partida.'); return; }
+  storage.set(LAST_KEY, id);
+  currentId = id;
+  renderSaveTab();
+  if (manual) toast('💾 Partida guardada', `ID: ${id}`);
+}
+function loadFrom(id){
+  id = sanitizeId(id);
+  const raw = storage.get(PREFIX + id);
+  if (!raw){ toast('❓ No hay ninguna partida con ese ID', id); return; }
+  try {
+    currentId = id;
+    applyState(decode(raw));
+    storage.set(LAST_KEY, id);
+    renderSaveTab();
+    toast('📂 Partida cargada', `ID: ${id}`);
+  } catch(e){ toast('⚠️ La partida guardada está dañada'); }
+}
+function listSlots(){
+  return storage.keys().filter(k => k.startsWith(PREFIX)).map(k => {
+    const id = k.slice(PREFIX.length);
+    try { const o = decode(storage.get(k)); return {id, total:o.allTime || o.total, last:o.last, reb:o.rebirths || 0}; }
+    catch(e){ return {id, total:0, last:0, reb:0}; }
+  }).sort((a,b) => b.last - a.last);
+}
+function renderSaveTab(){
+  setText($('#curId'), currentId);
+  setText($('#bakeryName'), `Panadería de ${currentId}`);
+  const box = $('#slots'); box.innerHTML = '';
+  const slots = listSlots();
+  if (!slots.length){ box.innerHTML = '<div class="empty">Todavía no hay partidas guardadas.</div>'; return; }
+  slots.forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'slot' + (s.id === currentId ? ' current' : '');
+    d.innerHTML = '<div class="sinfo"><div class="sid"></div><div class="muted"></div></div>';
+    d.querySelector('.sid').textContent = s.id + (s.id === currentId ? ' (actual)' : '');
+    d.querySelector('.muted').textContent = `${fmt(s.total)} galletas · ${s.reb} renac. · ${s.last ? new Date(s.last).toLocaleString('es-ES',{dateStyle:'short',timeStyle:'short'}) : '—'}`;
+    const bl = document.createElement('button'); bl.textContent = 'Cargar';
+    bl.onclick = () => { if (s.id !== currentId && autosave) saveTo(currentId); loadFrom(s.id); };
+    const bd = document.createElement('button'); bd.textContent = 'Borrar'; bd.className = 'danger';
+    bd.onclick = () => twoClick(bd, () => { storage.del(PREFIX + s.id); renderSaveTab(); toast('🗑️ Partida borrada', s.id); });
+    d.append(bl, bd);
+    box.appendChild(d);
+  });
+}
+
+/* ================== EVENTOS ================== */
+$('#cookie').addEventListener('click', clickCookie);
+$('#buyAll').addEventListener('click', () => { buyAllUpgrades(); renderUpgrades(); renderStore(); });
+function openTab(name){
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
+  if (name === 'save') renderSaveTab();
+  if (name === 'achs'){ achDirty = true; renderAchs(); }
+  if (name === 'reb'){ celKey = null; renderRebirth(); renderAutoBox(); }
+  if (name === 'tokens') renderTokens();
+}
+document.querySelectorAll('.tabs button').forEach(btn => btn.addEventListener('click', () => openTab(btn.dataset.tab)));
+$('#meta').addEventListener('click', e => { const g = e.target.closest('[data-goto]'); if (g) openTab(g.dataset.goto); });
+document.querySelectorAll('.amt button').forEach(btn => btn.addEventListener('click', () => {
+  buyN = btn.dataset.n === 'max' ? 'max' : +btn.dataset.n;
+  document.querySelectorAll('.amt button').forEach(b => b.classList.toggle('on', b === btn));
+  renderStore();
+}));
+$('#tok1').addEventListener('click', () => { if (buyTokens(1)) toast('🪙 +1 token', `Multiplicador: ×${fmtX(R.tokMult)}`); renderTokens(); });
+$('#tok10').addEventListener('click', () => { if (buyTokens(10)) toast('🪙 +10 tokens', `Multiplicador: ×${fmtX(R.tokMult)}`); renderTokens(); });
+$('#tokMax').addEventListener('click', () => { const n = buyTokens(tokMaxN()); if (n) toast(`🪙 +${n} token${n>1?'s':''}`, `Multiplicador: ×${fmtX(R.tokMult)}`); renderTokens(); });
+$('#btnRebirth').addEventListener('click', e => twoClick(e.currentTarget, rebirth));
+document.querySelectorAll('#autoBox input').forEach(cb => cb.addEventListener('change', () => { S.auto[cb.dataset.auto] = cb.checked; }));
+$('#btnSave').addEventListener('click', () => saveTo($('#idInput').value || currentId, true));
+$('#btnLoad').addEventListener('click', () => {
+  const id = $('#idInput').value;
+  if (!sanitizeId(id)){ toast('⚠️ Escribe el ID que quieres cargar'); return; }
+  if (sanitizeId(id) !== currentId && autosave) saveTo(currentId);
+  loadFrom(id);
+});
+$('#autosave').addEventListener('change', e => { autosave = e.target.checked; storage.set(AUTO_KEY, autosave ? '1' : '0'); });
+$('#btnExport').addEventListener('click', () => {
+  S.flags.exported = true; S.last = Date.now();
+  const code = encode(S);
+  $('#code').value = code; $('#code').select();
+  if (navigator.clipboard) navigator.clipboard.writeText(code).then(() => toast('📋 Código copiado al portapapeles')).catch(() => toast('📤 Código exportado', 'Cópialo del recuadro.'));
+  else toast('📤 Código exportado', 'Cópialo del recuadro.');
+});
+$('#btnImport').addEventListener('click', () => {
+  try { applyState(decode($('#code').value)); toast('📥 Partida importada', `Se guardará en el ID «${currentId}».`); if (autosave) saveTo(currentId); }
+  catch(e){ toast('⚠️ Código no válido', 'Comprueba que lo has pegado entero.'); }
+});
+$('#btnReset').addEventListener('click', e => twoClick(e.currentTarget, () => {
+  S = fresh(); buffs = {frenzy:0, clickFrenzy:0}; hideGolden(); syncSets();
+  achDirty = true; upgKey = null; celKey = null; calc(); renderAll(); saveTo(currentId);
+  toast('🧹 Partida reiniciada desde cero');
+}));
+window.addEventListener('beforeunload', () => { if (autosave) saveTo(currentId); });
+document.addEventListener('keydown', e => { if (e.code === 'KeyS' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); saveTo(currentId, true); } });
+
+/* ================== BUCLE ================== */
+function renderAll(){ calc(); renderTop(); renderStore(); renderUpgrades(); renderAchs(); renderStats(); renderBuffs(); renderMeta(); renderTokens(); renderRebirth(); renderAutoBox(); renderSaveTab(); }
+let lastT = performance.now(), slowT = 0, autoT = 0;
+function tick(){
+  const now = performance.now();
+  const dt = Math.min((now - lastT)/1000, 3600);
+  lastT = now;
+  calc();
+  let g = R.cps*dt;
+  if (R.m.autoClick && S.auto.click){ const a = R.click*R.m.autoClick*dt; g += a; S.handmade += a; }
+  earn(g); S.played += dt;
+  if (R.base > S.maxCps) S.maxCps = R.base;
+  goldenTick();
+  autoT += dt;
+  if (autoT >= 0.5){ autoT = 0; autoRun(); }
+  renderTop(); renderStore(); renderUpgrades(); renderBuffs();
+  slowT += dt;
+  if (slowT >= 0.5){ slowT = 0; renderMeta(); renderStats(); renderAchs(); renderTokens(); renderRebirth(); }
+}
+
+/* ================== INICIO ================== */
+(function init(){
+  buildStore();
+  if (!storage.ok) $('#storageWarn').hidden = false;
+  autosave = storage.get(AUTO_KEY) !== '0';
+  $('#autosave').checked = autosave;
+  currentId = sanitizeId(storage.get(LAST_KEY)) || randomId();
+  const raw = storage.get(PREFIX + currentId);
+  if (raw){ try { applyState(decode(raw)); } catch(e){ applyState(fresh(), false); } }
+  else applyState(fresh(), false);
+  $('#idInput').value = currentId;
+  renderAll();
+  setInterval(tick, 100);
+  setInterval(checkAch, 1000);
+  setInterval(rotateNews, 12000);
+  setInterval(() => { if (autosave) saveTo(currentId); }, 30000);
+})();
+</script>
+</body>
+</html>
